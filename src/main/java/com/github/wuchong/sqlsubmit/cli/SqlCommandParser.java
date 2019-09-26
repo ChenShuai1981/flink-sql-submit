@@ -104,6 +104,21 @@ public final class SqlCommandParser {
 			"(CREATE\\s+TABLE.*)",
 				SINGLE_OPERAND),
 
+		CREATE_VIEW(
+				"(CREATE\\s+VIEW.*)",
+				SINGLE_OPERAND),
+
+        CREATE_FUNCTION(
+                "(CREATE\\s+FUNCTION\\s+(\\S+)\\s+AS\\s+'(.*)')",
+                (operands) -> {
+                    if (operands.length < 3) {
+                        return Optional.empty();
+                    } else if (operands[0] == null) {
+                        return Optional.of(new String[0]);
+                    }
+                    return Optional.of(new String[]{operands[1], operands[2]});
+                }),
+
 		SET(
 			"SET(\\s+(\\S+)\\s*=(.*))?", // whitespace is only ignored on the left side of '='
 			(operands) -> {

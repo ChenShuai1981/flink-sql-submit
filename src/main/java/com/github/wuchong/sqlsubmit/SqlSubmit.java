@@ -22,9 +22,14 @@ import com.github.wuchong.sqlsubmit.cli.CliOptions;
 import com.github.wuchong.sqlsubmit.cli.CliOptionsParser;
 import com.github.wuchong.sqlsubmit.cli.SqlCommandParser;
 import com.github.wuchong.sqlsubmit.cli.SqlCommandParser.SqlCommandCall;
+import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.SqlParserException;
 import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.api.java.BatchTableEnvironment;
+import org.apache.flink.table.api.java.StreamTableEnvironment;
+import org.apache.flink.table.functions.*;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -41,12 +46,12 @@ public class SqlSubmit {
     // --------------------------------------------------------------------------------------------
 
     private String sqlFilePath;
-    private String workSpace;
     private TableEnvironment tEnv;
+//    private BatchTableEnvironment tEnv;
+//    private StreamTableEnvironment tEnv;
 
     private SqlSubmit(CliOptions options) {
         this.sqlFilePath = options.getSqlFilePath();
-        this.workSpace = options.getWorkingSpace();
     }
 
     private void run() throws Exception {
@@ -55,7 +60,14 @@ public class SqlSubmit {
                 .inStreamingMode()
                 .build();
         this.tEnv = TableEnvironment.create(settings);
-        List<String> sql = Files.readAllLines(Paths.get(workSpace + "/" + sqlFilePath));
+
+//        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+//        this.tEnv = StreamTableEnvironment.create(env, settings);
+
+//        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+//        this.tEnv = BatchTableEnvironment.create(env);
+
+        List<String> sql = Files.readAllLines(Paths.get(sqlFilePath));
         List<SqlCommandCall> calls = SqlCommandParser.parse(sql);
         for (SqlCommandCall call : calls) {
             callCommand(call);
@@ -76,6 +88,12 @@ public class SqlSubmit {
             case INSERT_INTO:
                 callInsertInto(cmdCall);
                 break;
+            case CREATE_FUNCTION:
+                callCreateFunction(cmdCall);
+                break;
+            case CREATE_VIEW:
+                callCreateView(cmdCall);
+                break;
             default:
                 throw new RuntimeException("Unsupported command: " + cmdCall.command);
         }
@@ -87,7 +105,42 @@ public class SqlSubmit {
         tEnv.getConfig().getConfiguration().setString(key, value);
     }
 
+    private void callCreateFunction(SqlCommandCall cmdCall) {
+        String functionName = cmdCall.operands[0];
+        String functionClassName = cmdCall.operands[1];
+        try {
+            Class clazz = Class.forName(functionClassName);
+            Object instance = clazz.newInstance();
+
+            if (instance instanceof ScalarFunction) {
+                tEnv.registerFunction(functionName, (ScalarFunction)instance);
+            }
+//            else if (instance instanceof AggregateFunction) {
+//                tEnv.registerFunction(functionName, (AggregateFunction)instance);
+//            } else if (instance instanceof TableAggregateFunction) {
+//                tEnv.registerFunction(functionName, (TableAggregateFunction)instance);
+//            } else if (instance instanceof TableFunction) {
+//                tEnv.registerFunction(functionName, (TableFunction)instance);
+//            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void callCreateTable(SqlCommandCall cmdCall) {
+        String ddl = cmdCall.operands[0];
+        try {
+            tEnv.sqlUpdate(ddl);
+        } catch (SqlParserException e) {
+            throw new RuntimeException("SQL parse failed:\n" + ddl + "\n", e);
+        }
+    }
+
+    private void callCreateView(SqlCommandCall cmdCall) {
         String ddl = cmdCall.operands[0];
         try {
             tEnv.sqlUpdate(ddl);

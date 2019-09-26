@@ -10,16 +10,12 @@ SET table.optimizer.agg-phase-strategy=TWO_PHASE;
 SET table.optimizer.distinct-agg.split.enabled=true;
 
 -- source
-CREATE TABLE user_log (
-    user_id VARCHAR,
-    item_id VARCHAR,
-    category_id VARCHAR,
-    behavior VARCHAR,
-    ts TIMESTAMP
+CREATE TABLE userTab (
+    data VARCHAR
 ) WITH (
     'connector.type' = 'kafka',
     'connector.version' = 'universal',
-    'connector.topic' = 'user_behavior',
+    'connector.topic' = 'simple_user3',
     'connector.startup-mode' = 'earliest-offset',
     'connector.properties.0.key' = 'zookeeper.connect',
     'connector.properties.0.value' = 'localhost:2181',
@@ -33,24 +29,18 @@ CREATE TABLE user_log (
 );
 
 -- sink
-CREATE TABLE pvuv_sink (
-    dt VARCHAR,
-    pv BIGINT,
-    uv BIGINT
+CREATE TABLE user_sink (
+    data VARCHAR,
+    name VARCHAR,
+    age INT
 ) WITH (
     'connector.type' = 'jdbc',
-    'connector.url' = 'jdbc:mysql://localhost:3306/flink-test',
-    'connector.table' = 'pvuv_sink',
+    'connector.url' = 'jdbc:mysql://localhost:3306/test',
+    'connector.table' = 'user_sink',
     'connector.username' = 'root',
     'connector.password' = 'root',
     'connector.write.flush.max-rows' = '1'
 );
 
 
-INSERT INTO pvuv_sink
-SELECT
-  DATE_FORMAT(ts, 'yyyy-MM-dd HH:00') dt,
-  COUNT(*) AS pv,
-  COUNT(DISTINCT user_id) AS uv
-FROM user_log
-GROUP BY DATE_FORMAT(ts, 'yyyy-MM-dd HH:00');
+INSERT INTO user_sink SELECT u.data, r.name, r.age FROM userTab AS u, LATERAL TABLE(splitTVF(u.data)) AS r;

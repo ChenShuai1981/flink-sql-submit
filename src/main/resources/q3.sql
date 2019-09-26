@@ -1,0 +1,68 @@
+------ 开启 mini-batch
+----SET table.exec.mini-batch.enabled=true;
+------ mini-batch的时间间隔，即作业需要额外忍受的延迟
+----SET table.exec.mini-batch.allow-latency=1s;
+------ 一个 mini-batch 中允许最多缓存的数据
+----SET table.exec.mini-batch.size=1000;
+------ 开启 local-global 优化
+----SET table.optimizer.agg-phase-strategy=TWO_PHASE;
+------ 开启 distinct agg 切分
+----SET table.optimizer.distinct-agg.split.enabled=true;
+--
+---- inventory
+--CREATE TABLE inventory_tab (
+--   product_id VARCHAR,
+--   product_count BIGINT
+--) WITH (
+--    'connector.type' = 'kafka',
+--    'connector.version' = 'universal',
+--    'connector.topic' = 'inventory',
+--    'connector.startup-mode' = 'earliest-offset',
+--    'connector.properties.0.key' = 'zookeeper.connect',
+--    'connector.properties.0.value' = 'localhost:2181',
+--    'connector.properties.1.key' = 'bootstrap.servers',
+--    'connector.properties.1.value' = 'localhost:9092',
+--    'connector.properties.2.key' = 'group.id',
+--    'connector.properties.2.value' = 'testGroup1',
+--    'update-mode' = 'append',
+--    'format.type' = 'json',
+--    'format.derive-schema' = 'true'
+--);
+--
+---- sales
+--CREATE TABLE sales_tab (
+--   product_id VARCHAR,
+--   sales_count BIGINT
+--) WITH (
+--    'connector.type' = 'kafka',
+--    'connector.version' = 'universal',
+--    'connector.topic' = 'sales',
+--    'connector.startup-mode' = 'earliest-offset',
+--    'connector.properties.0.key' = 'zookeeper.connect',
+--    'connector.properties.0.value' = 'localhost:2181',
+--    'connector.properties.1.key' = 'bootstrap.servers',
+--    'connector.properties.1.value' = 'localhost:9092',
+--    'connector.properties.2.key' = 'group.id',
+--    'connector.properties.2.value' = 'testGroup1',
+--    'update-mode' = 'append',
+--    'format.type' = 'json',
+--    'format.derive-schema' = 'true'
+--);
+--
+---- sink
+--CREATE TABLE join_sink (
+--   product_id VARCHAR,
+--   product_count BIGINT,
+--   sales_count BIGINT
+--) WITH (
+--    'connector.type' = 'jdbc',
+--    'connector.url' = 'jdbc:mysql://localhost:3306/test?useSSL=false',
+--    'connector.table' = 'join_sink',
+--    'connector.username' = 'root',
+--    'connector.password' = 'root',
+--    'connector.write.flush.max-rows' = '1'
+--);
+--
+--CREATE VIEW join_view AS SELECT l.product_id, l.product_count, r.sales_count FROM inventory_tab l JOIN  sales_tab r ON l.product_id = r.product_id;
+--
+--INSERT INTO join_sink SELECT product_id, product_count, sales_count FROM join_view ;

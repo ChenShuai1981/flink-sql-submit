@@ -25,18 +25,12 @@ package com.github.wuchong.sqlsubmit.cli;
 public class CliOptions {
 
     private final String sqlFilePath;
-    private final String workingSpace;
 
-    public CliOptions(String sqlFilePath, String workingSpace) {
+    public CliOptions(String sqlFilePath) {
         this.sqlFilePath = sqlFilePath;
-        this.workingSpace = workingSpace;
     }
 
     public String getSqlFilePath() {
         return sqlFilePath;
-    }
-
-    public String getWorkingSpace() {
-        return workingSpace;
     }
 }

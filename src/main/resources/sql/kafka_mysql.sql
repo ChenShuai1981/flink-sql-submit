@@ -39,7 +39,7 @@ CREATE TABLE pvuv_sink (
     uv BIGINT
 ) WITH (
     'connector.type' = 'jdbc',
-    'connector.url' = 'jdbc:mysql://localhost:3306/flink-test',
+    'connector.url' = 'jdbc:mysql://localhost:3306/flink-test?useUnicode=true&characterEncoding=UTF-8',
     'connector.table' = 'pvuv_sink',
     'connector.username' = 'root',
     'connector.password' = 'root',
