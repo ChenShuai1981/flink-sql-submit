@@ -34,10 +34,7 @@ public class RetractKafkaTableSink implements RetractStreamTableSink<Row> {
     protected final Properties properties;
 
     /** Serialization schema for encoding records to Kafka. */
-    protected final SerializationSchema<String> keySchema;
-
-    /** Serialization schema for encoding records to Kafka. */
-    protected final SerializationSchema<Row> valueSchema;
+    protected final SerializationSchema<Row> serializationSchema;
 
     /** Partitioner to select Kafka partition for each item. */
     protected final Optional<FlinkKafkaPartitioner<Row>> partitioner;
@@ -47,14 +44,12 @@ public class RetractKafkaTableSink implements RetractStreamTableSink<Row> {
             String topic,
             Properties properties,
             Optional<FlinkKafkaPartitioner<Row>> partitioner,
-            SerializationSchema<String> keySchema,
-            SerializationSchema<Row> valueSchema) {
+            SerializationSchema<Row> serializationSchema) {
         this.schema = Preconditions.checkNotNull(schema, "Schema must not be null.");
         this.topic = Preconditions.checkNotNull(topic, "Topic must not be null.");
         this.properties = Preconditions.checkNotNull(properties, "Properties must not be null.");
         this.partitioner = Preconditions.checkNotNull(partitioner, "Partitioner must not be null.");
-        this.keySchema = Preconditions.checkNotNull(keySchema, "Key schema must not be null.");
-        this.valueSchema = Preconditions.checkNotNull(valueSchema, "Value schema must not be null.");
+        this.serializationSchema = Preconditions.checkNotNull(serializationSchema, "Value schema must not be null.");
     }
 
     @Override
@@ -72,8 +67,7 @@ public class RetractKafkaTableSink implements RetractStreamTableSink<Row> {
         final SinkFunction<Tuple2<Boolean, Row>> kafkaProducer = createKafkaProducer(
                 topic,
                 properties,
-                keySchema,
-                valueSchema,
+                serializationSchema,
                 partitioner);
 
         return dataStream
@@ -95,12 +89,11 @@ public class RetractKafkaTableSink implements RetractStreamTableSink<Row> {
     private SinkFunction<Tuple2<Boolean, Row>> createKafkaProducer(
             String topic,
             Properties properties,
-            SerializationSchema<String> keySchema,
-            SerializationSchema<Row> valueSchema,
+            SerializationSchema<Row> serializationSchema,
             Optional<FlinkKafkaPartitioner<Row>> partitioner) {
         return new FlinkKafkaProducer(
                 topic,
-                new RetractKeyedSerializationSchema(topic, keySchema, valueSchema),
+                new RetractKeyedSerializationSchema(topic, serializationSchema),
                 properties,
                 FlinkKafkaProducer.Semantic.EXACTLY_ONCE);
     }
@@ -117,8 +110,7 @@ public class RetractKafkaTableSink implements RetractStreamTableSink<Row> {
         return Objects.equals(schema, that.schema) &&
                 Objects.equals(topic, that.topic) &&
                 Objects.equals(properties, that.properties) &&
-                Objects.equals(keySchema, that.keySchema) &&
-                Objects.equals(valueSchema, that.valueSchema) &&
+                Objects.equals(serializationSchema, that.serializationSchema) &&
                 Objects.equals(partitioner, that.partitioner);
     }
 
@@ -128,8 +120,7 @@ public class RetractKafkaTableSink implements RetractStreamTableSink<Row> {
                 schema,
                 topic,
                 properties,
-                keySchema,
-                valueSchema,
+                serializationSchema,
                 partitioner);
     }
 }

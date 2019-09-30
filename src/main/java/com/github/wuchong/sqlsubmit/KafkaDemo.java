@@ -110,6 +110,7 @@ public class KafkaDemo {
                 "GROUP BY DATE_FORMAT(ts, 'yyyy-MM-dd HH:00')");
 
 //        tbl.insertInto("pvuv_sink");
+        // log.cleanup.policy=compact
         DataStream<Tuple2<Boolean, Row>> logDs = tableEnv.toRetractStream(tbl, Row.class);
 
         // 转成 <Boolean, String>

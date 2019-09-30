@@ -8,29 +8,25 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 
 import javax.annotation.Nullable;
 
-public class RetractKeyedSerializationSchema implements KafkaSerializationSchema<Tuple2<Boolean, Tuple2<String, Row>>> {
+public class RetractKeyedSerializationSchema<K> implements KafkaSerializationSchema<Tuple2<Boolean, Row>> {
 
     private String topic;
-    private SerializationSchema<String> keySchema;
-    private SerializationSchema<Row> valueSchema;
+    private SerializationSchema<Row> serializationSchema;
 
-    public RetractKeyedSerializationSchema(String topic, SerializationSchema<String> keySchema, SerializationSchema<Row> valueSchema) {
+    public RetractKeyedSerializationSchema(String topic, SerializationSchema<Row> serializationSchema) {
         this.topic = topic;
-        this.keySchema = keySchema;
-        this.valueSchema = valueSchema;
+        this.serializationSchema = serializationSchema;
     }
 
     @Override
-    public ProducerRecord<byte[], byte[]> serialize(Tuple2<Boolean, Tuple2<String, Row>> element, @Nullable Long timestamp) {
+    public ProducerRecord<byte[], byte[]> serialize(Tuple2<Boolean, Row> element, @Nullable Long timestamp) {
         Boolean isAdd = element.f0;
-        Tuple2<String, Row> item = element.f1;
-        String key = item.f0;
-        Row value = item.f1;
+        Row row = element.f1;
         ProducerRecord<byte[], byte[]> record = null;
         if (isAdd) {
-            record = new ProducerRecord<>(topic, keySchema.serialize(key), valueSchema.serialize(value));
+            record = new ProducerRecord<>(topic, row.toString().getBytes(), serializationSchema.serialize(row));
         } else {
-            record = new ProducerRecord<>(topic, keySchema.serialize(key), null);
+            record = new ProducerRecord<>(topic, row.toString().getBytes(), null);
         }
         return record;
     }

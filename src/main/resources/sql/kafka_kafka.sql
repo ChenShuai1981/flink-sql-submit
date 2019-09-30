@@ -53,7 +53,7 @@ SELECT
   user_id, item_id, category_id, behavior, ts
 FROM user_log WHERE behavior = 'pv';
 
-
+-- 目前聚合query不支持sink到kafka，因为只支持 AppendStream
 ---- aggregation sink
 --CREATE TABLE pvuv_sink (
 --    dt VARCHAR,

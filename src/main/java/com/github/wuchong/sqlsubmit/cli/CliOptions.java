@@ -26,11 +26,16 @@ public class CliOptions {
 
     private final String sqlFilePath;
 
-    public CliOptions(String sqlFilePath) {
+    private final String execOptionFilePath;
+
+    public CliOptions(String sqlFilePath, String execOptionFilePath) {
         this.sqlFilePath = sqlFilePath;
+        this.execOptionFilePath = execOptionFilePath;
     }
 
     public String getSqlFilePath() {
         return sqlFilePath;
     }
+
+    public String getExecOptionFilePath() { return execOptionFilePath; }
 }

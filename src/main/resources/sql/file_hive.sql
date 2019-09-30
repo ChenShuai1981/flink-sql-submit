@@ -27,18 +27,12 @@ CREATE TABLE player_sink (
   player_name VARCHAR,
   height DOUBLE
 ) WITH (
-  'connector.type' = 'filesystem',
-  'connector.path' = 'file:///Users/chenshuai1/github/flink-sql-submit/src/main/resources/player2.csv',
-  'format.type' = 'csv',
-  'format.fields.0.name' = 'player_id',
-  'format.fields.0.type' = 'BIGINT',
-  'format.fields.1.name' = 'team_id',
-  'format.fields.1.type' = 'BIGINT',
-  'format.fields.2.name' = 'player_name',
-  'format.fields.2.type' = 'VARCHAR',
-  'format.fields.3.name' = 'height',
-  'format.fields.3.type' = 'DOUBLE',
-  'format.field-delimiter' = ','
+    'connector.type' = 'hive',
+    'property-version' = '1',
+    'default-database' = 'default',
+    'hive-conf-dir' = '/Users/chenshuai1/dev/apache-hive-1.2.2-bin/conf',
+    'hive-version' = '1.2.2',
+    'connector.write.flush.max-rows' = '1'
 );
 
 INSERT INTO player_sink

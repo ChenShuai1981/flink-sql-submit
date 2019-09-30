@@ -23,10 +23,11 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.StringUtils;
 
 public class CliOptionsParser {
 
-    public static final Option OPTION_SQL_FILE = Option
+    public static final Option OPTION_SQL_FILE_PATH = Option
             .builder("f")
             .required(true)
             .longOpt("file")
@@ -35,10 +36,20 @@ public class CliOptionsParser {
             .desc("The SQL file path.")
             .build();
 
+    public static final Option OPTION_EXEC_OPTION_FILE_PATH = Option
+            .builder("o")
+            .required(false)
+            .longOpt("option")
+            .numberOfArgs(1)
+            .argName("Execution option file path")
+            .desc("The execution option file path.")
+            .build();
+
     public static final Options CLIENT_OPTIONS = getClientOptions(new Options());
 
     public static Options getClientOptions(Options options) {
-        options.addOption(OPTION_SQL_FILE);
+        options.addOption(OPTION_SQL_FILE_PATH);
+        options.addOption(OPTION_EXEC_OPTION_FILE_PATH);
         return options;
     }
 
@@ -53,7 +64,9 @@ public class CliOptionsParser {
         try {
             DefaultParser parser = new DefaultParser();
             CommandLine line = parser.parse(CLIENT_OPTIONS, args, true);
-            return new CliOptions(line.getOptionValue(CliOptionsParser.OPTION_SQL_FILE.getOpt()));
+            String sqlFilePath = line.getOptionValue(CliOptionsParser.OPTION_SQL_FILE_PATH.getOpt());
+            String execOptionFilePath = line.getOptionValue(CliOptionsParser.OPTION_EXEC_OPTION_FILE_PATH.getOpt());
+            return new CliOptions(sqlFilePath, execOptionFilePath);
         }
         catch (ParseException e) {
             throw new RuntimeException(e.getMessage());
