@@ -55,8 +55,8 @@ public class SqlSubmit {
 
     private String sqlFilePath;
     private String execOptionFilePath;
-    private TableEnvironment tEnv;
-//    private BatchTableEnvironment tEnv;
+//    private TableEnvironment tEnv;
+    private BatchTableEnvironment tEnv;
 //    private StreamTableEnvironment tEnv;
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -66,11 +66,14 @@ public class SqlSubmit {
     }
 
     private void run() throws Exception {
-        EnvironmentSettings settings = EnvironmentSettings.newInstance()
-                .useBlinkPlanner()
-                .inStreamingMode()
-                .build();
-        this.tEnv = TableEnvironment.create(settings);
+//        EnvironmentSettings settings = EnvironmentSettings.newInstance()
+//                .useBlinkPlanner()
+//                .inStreamingMode()
+//                .build();
+//        this.tEnv = TableEnvironment.create(settings);
+        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+        this.tEnv = BatchTableEnvironment.create(env);
         if (this.execOptionFilePath != null) {
             String jsonString = new String(Files.readAllBytes(Paths.get(this.execOptionFilePath)));
             JsonNode jsonNode = objectMapper.readTree(jsonString);
@@ -146,14 +149,13 @@ public class SqlSubmit {
 
             if (instance instanceof ScalarFunction) {
                 tEnv.registerFunction(functionName, (ScalarFunction)instance);
-            }
-//            else if (instance instanceof AggregateFunction) {
-//                tEnv.registerFunction(functionName, (AggregateFunction)instance);
-//            } else if (instance instanceof TableAggregateFunction) {
+            } else if (instance instanceof AggregateFunction) {
+                tEnv.registerFunction(functionName, (AggregateFunction)instance);
+            } else if (instance instanceof TableAggregateFunction) {
 //                tEnv.registerFunction(functionName, (TableAggregateFunction)instance);
-//            } else if (instance instanceof TableFunction) {
-//                tEnv.registerFunction(functionName, (TableFunction)instance);
-//            }
+            } else if (instance instanceof TableFunction) {
+                tEnv.registerFunction(functionName, (TableFunction)instance);
+            }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {

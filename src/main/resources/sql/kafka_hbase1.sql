@@ -26,35 +26,27 @@ CREATE TABLE user_log (
     'connector.properties.1.key' = 'bootstrap.servers',
     'connector.properties.1.value' = 'localhost:9092',
     'connector.properties.2.key' = 'group.id',
-    'connector.properties.2.value' = 'testGroup',
+    'connector.properties.2.value' = 'kafka_hbase',
     'update-mode' = 'append',
     'format.type' = 'json',
     'format.derive-schema' = 'true'
 );
 
 -- sink
-CREATE TABLE pvuv_sink (
+CREATE TABLE user_log_sink (
     rowkey VARCHAR,
-    cf ROW<pv INT, uv INT>
+    cf ROW<item_id VARCHAR, category_id VARCHAR, behavior VARCHAR>
 ) WITH (
     'connector.type' = 'hbase',
     'connector.version' = '1.4.3',
-    'connector.table-name' = 'pvuv',
+    'connector.table-name' = 'user_log',
     'connector.property-version' = '1',
     'connector.zookeeper.quorum' = 'localhost:2181',
     'connector.zookeeper.znode.parent' = '/hbase'
 );
 
-CREATE VIEW stats_view AS
+INSERT INTO user_log_sink
 SELECT
-  DATE_FORMAT(ts, 'yyyy-MM-dd HH:00') AS dt,
-  COUNT(*) AS pv,
-  COUNT(DISTINCT user_id) AS uv
-FROM user_log
-GROUP BY DATE_FORMAT(ts, 'yyyy-MM-dd HH:00');
-
-INSERT INTO pvuv_sink
-SELECT
-  dt AS rowkey,
-  ROW(pv, uv) AS cf
-FROM stats_view;
+  user_id || DATE_FORMAT(ts, 'yyyy-MM-dd HH:00') AS rowkey,
+  ROW(item_id, category_id, behavior) AS cf
+FROM user_log;

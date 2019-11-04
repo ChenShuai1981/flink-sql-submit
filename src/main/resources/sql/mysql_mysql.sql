@@ -13,7 +13,7 @@ CREATE TABLE player_source (
     'connector.write.flush.max-rows' = '1'
 );
 
--- mysql表中INT(11)类型会被解析成INT
+-- mysql表中INT(11)类型会被解析成INT，下面是创建mysql表player_stats的脚本
 
 --CREATE TABLE `player_stats` (
 --  `team_id` int(11) NOT NULL,
